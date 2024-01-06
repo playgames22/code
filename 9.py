@@ -1,38 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def lowess(x, y, f, iterations):
-    n = len(x)
-    r = int(np.ceil(f * n))
-    h = [np.sort(np.abs(x - x[i]))[r] for i in range(n)]
-    w = np.clip(np.abs((x[:, None] - x[None, :]) / h), 0.0, 1.0)
-    w = (1 - w ** 3) ** 3
-    yest = np.zeros(n)
-    delta = np.ones(n)
+def local_regression(x0, X, Y, tau):
+    x0 = [1, x0]   
+    X = [[1, i] for i in X]
+    X = np.asarray(X)
+    xw = (X.T) * np.exp(np.sum((X - x0) ** 2, axis=1) / (-2 * tau))
+    beta = np.linalg.pinv(xw @ X) @ xw @ Y @ x0  
+    return beta    
 
-    for _ in range(iterations):
-        for i in range(n):
-            weights = delta * w[:, i]
-            b = np.array([np.sum(weights * y), np.sum(weights * y * x)])
-            A = np.array([[np.sum(weights), np.sum(weights * x)], [np.sum(weights * x), np.sum(weights * x * x)]])
-            beta = np.linalg.solve(A, b)
-            yest[i] = beta[0] + beta[1] * x[i]
+def draw(tau):
+    prediction = [local_regression(x0, X, Y, tau) for x0 in domain]
+    plt.plot(X, Y, 'o', color='black')
+    plt.plot(domain, prediction, color='red')
+    plt.show()
 
-        residuals = y - yest
-        s = np.median(np.abs(residuals))
-        delta = np.clip(residuals / (6.0 * s), -1, 1)
-        delta = (1 - delta ** 2) ** 2
+X = np.linspace(-3, 3, num=1000)
+domain = X
+Y = np.log(np.abs(X ** 2 - 1) + .5)
 
-    return yest
-
-n = 100
-x = np.linspace(0, 2 * np.pi, n)
-y = np.sin(x) + 0.3 * np.random.randn(n)
-f = 0.25 
-iterations = 3 
-
-yest = lowess(x, y, f, iterations)
-
-plt.plot(x, y, "r.")
-plt.plot(x, yest, "b-")
-plt.show()
+draw(10)
+draw(0.1)
+draw(0.01)
+draw(0.001)
