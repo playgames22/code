@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
-import sklearn
+from  sklearn import datasets
+from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 import pandas as pd
 import numpy as np
 
@@ -32,6 +34,7 @@ plt.title('EM Clustering')
 
 plt.show()
 
+import sklearn.metrics as sm 
 print("Actual Target is:\n", iris.target)
 print("K Means:\n", model1.labels_)
 print("EM:\n", model2.predict(X))
